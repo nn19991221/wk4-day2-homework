@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <title>Food Blog</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <script src="https://cdn.jsdelivr.net/npm/vue@2.6.12/dist/vue.js"></script>
+  <link rel="preconnect" href="https://fonts.gstatic.com">
+  <link href="https://fonts.googleapis.com/css2?family=Sacramento&display=swap" rel="stylesheet">
+  <style>
+    * { font-family: Arial, Helvetica, sans-serif; }
+    #leftside { float:left; width:30%; min-height:1200px; background-color:rgb(77,192,154); }
+    #rightside { float:left; width:70%; min-height:1200px; background-color:rgb(238,226,192); position:relative; }
+    #container { background-color:rgba(255,255,255,0.85); position:absolute; top:15%; left:15%; min-width:1100px; min-height:1050px; border-radius:0.7em; }
+    header { height:50px; background-color:rgba(231,229,229,0.5); font-size:2.75em; padding:0.5em; color:rgb(216,150,7); }
+    header span { font-family:'Sacramento', cursive; }
+    main { position:relative; }
+    main h2 { position:absolute; left:20%; top:30px; margin:25px 0 200px 50px; color:rgb(60,190,160); text-transform:uppercase; }
+    main #photos img { margin:0.75em; border:0.85em solid #fff; }
+    section#blogposts { position:absolute; left:20%; top:70px; padding:50px; }
+    .post { margin:25px; padding:25px; border:2px solid rgba(83,78,58,0.6); border-radius:0.5em; display:flex; align-items:flex-start; gap:16px; }
+    .avatar { width:56px; height:56px; border-radius:50%; object-fit:cover; cursor:pointer; border:3px solid #fff; box-shadow:0 2px 8px rgba(0,0,0,0.12); }
+    .post-body { flex:1; }
+    .author { font-weight:bold; }
+    .reply { margin-left:8px; color:#888; cursor:default; }
+
+    
+    .overlay { position:fixed; inset:0; background:rgba(0,0,0,0.45); display:flex; align-items:center; justify-content:center; z-index:999; }
+    .profile-box { width:min(560px, 92vw); background:#fff; border-radius:12px; box-shadow:0 20px 60px rgba(0,0,0,0.25); padding:24px 24px 20px; position:relative; }
+    .profile-close { position:absolute; top:10px; right:12px; font-size:18px; background:transparent; border:none; cursor:pointer; }
+    .profile-header { display:flex; align-items:center; gap:14px; margin-bottom:8px; }
+    .profile-header img { width:56px; height:56px; border-radius:50%; object-fit:cover; border:2px solid #eee; }
+    .profile-name { font-size:1.25rem; font-weight:700; margin:0; }
+    .profile-meta { margin:4px 0 0; color:#666; font-size:0.95rem; }
+    .profile-bio { margin-top:12px; line-height:1.55; color:#333; white-space:pre-line; }
+    footer { position:absolute; bottom:0; height:50px; width:100%; text-align:center; font-size:0.85em; }
+  </style>
+</head>
+<body>
+  
+  <aside id="leftside"></aside>
+  <aside id="rightside"></aside>
+
+  
+  <div id="app">
+    <div id="container">
+      
+      <site-header :title="siteTitle"></site-header>
+
+      <main>
+        
+        <photo-strip :images="images"></photo-strip>
+
+        <h2>Comments</h2>
+
+        
+        <section id="blogposts">
+          <blog-post
+            v-for="(post, idx) in posts"
+            :key="idx"
+            :post="post"
+            :profile-pic="profilePic"
+            @show-profile="showProfile"
+          ></blog-post>
+        </section>
+      </main>
+
+      <footer>
+        &copy; Copyright FOOD BLOG
+      </footer>
+    </div>
+
+    
+    <div v-if="showBox" class="overlay" @click.self="closeBox">
+      <div class="profile-box" role="dialog" aria-modal="true">
+        <button class="profile-close" aria-label="Close profile" @click="closeBox">✕</button>
+        <div class="profile-header">
+          <img :src="profilePic" alt="Profile">
+          <div>
+            <h3 class="profile-name">{{ currentAuthor.name }}</h3>
+            <p class="profile-meta"><strong>Foodie Level:</strong> {{ currentAuthor.level }}</p>
+          </div>
+        </div>
+        <div class="profile-bio">{{ currentAuthor.bio }}</div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    
+    Vue.component('site-header', {
+      props: ['title'],
+      template: `<header><span>{{ title }}</span></header>`
+    });
+
+    
+    Vue.component('photo-strip', {
+      props: ['images'],
+      template: `
+        <aside id="photos">
+          <img
+            v-for="(img, i) in images"
+            :key="i"
+            :src="img.src"
+            :alt="img.alt"
+            width="180"
+          >
+        </aside>
+      `
+    });
+
+    
+    Vue.component('blog-post', {
+      props: ['post', 'profilePic'],
+      template: `
+        <div class="post">
+          <img
+            class="avatar"
+            :src="profilePic"
+            :alt="'Profile of ' + post.author"
+            @click="$emit('show-profile', post.author)"
+          >
+          <div class="post-body">
+            <span class="author">{{ post.author }}</span> —
+            <span class="date">{{ post.date }}</span>
+            <span class="reply">REPLY</span>
+            <p v-text="post.text"></p>
+          </div>
+        </div>
+      `
+    });
+
+    
+    new Vue({
+      el: '#app',
+      data: {
+        siteTitle: 'Food Blog',
+        images: [{ src: 'images/chili.jpg', alt: 'White Chicken Chili' }],
+        profilePic: 'profile.png', 
+        
+        posts: [
+          {
+            author: 'Brianna',
+            date: 'February 18, 2021 @ 3:30 pm',
+            text: `Was amazing! My Walmart didn’t have coriander in stock and didn’t have ground cumin. I used serrano instead of jalapeño. It was just like my favorite tortilla soup from BJs. I am sending this recipe to my family. I want everyone to try it!`
+          },
+          {
+            author: 'LINH',
+            date: 'February 15, 2021 @ 9:46 am',
+            text: `I just made this soup today and it’s so tasty! didn’t have corn at home but still turned out very good. It’s a winner! I made beef chili for my parents; but since my dad has gout he can’t eat beef; this white chicken chili is perfect for him. Thank you Lisa!`
+          },
+          {
+            author: 'CATHERINE LEONARDO',
+            date: 'February 13, 2021 @ 12:58 pm',
+            text: `I LOVE this White Chicken Chili! You are right, it is satiating meal—delicious with toasted bread. Refreshingly different taste than any chicken chili I’ve made in the past. I made it exactly as written and added some chopped zucchini, carrots, and celery. Instead of shredding the chicken, I chopped it into small pieces. It freezes very well. Will be an all-time favorite, for sure.`
+          },
+          {
+            author: 'KALI',
+            date: 'February 13, 2021 @ 11:31 am',
+            text: `This recipe is dynamite! My partner usually won’t eat beans but he finished the whole pot (darn was hoping to have some for leftovers haha). This is crowd-pleaser that I am going to add to my regular recipe rotation. Thanks so much, Lisa!`
+          }
+        ],
+        
+        authors: {
+          'Brianna': {
+            level: 'Novice',
+            bio: 'Food enthusiast. Love to cook and experiment. Into only organic, fat free, sugar free stuffs!'
+          },
+          'LINH': {
+            level: 'Newcomer',
+            bio: 'Love food! Grew up with meat and potatoes. Recently venture outside my comfort zone. Loving everything I have been eating so far. Thai is my favorite at this time.'
+          },
+          'CATHERINE LEONARDO': {
+            level: 'Mentor',
+            bio: 'I have to say I never was the adventurous type until 2 years ago. My boyfriend, who is of Japanese background, exposed me to other cultural food and I have never look back since!'
+          },
+          'KALI': {
+            level: 'Novice',
+            bio: "Food is my passion. So is cooking. I love to experiment and try new things. I have to admit I'm a food whore! Invite me over for dinner and I'll be there!"
+          }
+        },
+        
+        showBox: false,
+        currentAuthor: { name: '', level: '', bio: '' }
+      },
+      methods: {
+        
+        showProfile(name) {
+          const info = this.authors[name];
+          if (!info) return;
+          this.currentAuthor = { name, level: info.level, bio: info.bio };
+          this.showBox = true;
+          
+          this.$nextTick(() => {
+            const btn = document.querySelector('.profile-close');
+            btn && btn.focus && btn.focus();
+          });
+        },
+       
+        closeBox() {
+          this.showBox = false;
+        }
+      }
+    });
+  </script>
+</body>
+</html>
